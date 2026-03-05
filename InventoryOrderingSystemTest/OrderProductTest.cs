@@ -136,5 +136,15 @@ namespace InventoryOrderingSystem.Test
             _repoOrderProducts.Verify(x => x.AddOrderProductAsync(orderProduct, order.OrderId, product.ProductId), Times.Once);
 
         }
+        [Fact]
+        public async Task GetOrderProductByIdAsync_ReturnsOrderProduct()
+        {
+            var orderProduct = GetTestOrderProduct();
+            _repoOrderProducts.Setup(x => x.GetOrderProductByIdAsync(orderProduct.OrderProductId)).ReturnsAsync(orderProduct);
+            // Act
+            var result = await _orderProductService.GetOrderProductByIdAsync(orderProduct.OrderProductId);
+            // Assert
+            result.Should().BeEquivalentTo(orderProduct);
+        }
     }
 }
