@@ -19,6 +19,11 @@ namespace InventoryOrderingSystem.Repositories.Customers
             await _context.SaveChangesAsync();
         }
 
+        public async Task<Customer> GetCustomerByEmailAsync(string email)
+        {
+            return await _context.Customers.FirstOrDefaultAsync(x => x.Email == email);
+        }
+
         public async Task<List<Customer>> GetAllCustomersAsync()
         {
             return await _context.Customers.ToListAsync();
@@ -34,5 +39,6 @@ namespace InventoryOrderingSystem.Repositories.Customers
             _context.Customers.Update(customer);
             await _context.SaveChangesAsync();
         }
+
     }
 }

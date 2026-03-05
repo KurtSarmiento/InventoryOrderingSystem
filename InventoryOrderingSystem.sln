@@ -5,6 +5,8 @@ VisualStudioVersion = 17.14.36518.9 d17.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InventoryOrderingSystem", "InventoryOrderingSystem\InventoryOrderingSystem.csproj", "{5B589559-A5F2-447E-BADD-7AF85ABBDEBA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InventoryOrderingSystem.Test", "InventoryOrderingSystemTest\InventoryOrderingSystem.Test.csproj", "{A76FDF52-BED8-4128-A398-8D0ECCA23258}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{5B589559-A5F2-447E-BADD-7AF85ABBDEBA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5B589559-A5F2-447E-BADD-7AF85ABBDEBA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5B589559-A5F2-447E-BADD-7AF85ABBDEBA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A76FDF52-BED8-4128-A398-8D0ECCA23258}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A76FDF52-BED8-4128-A398-8D0ECCA23258}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A76FDF52-BED8-4128-A398-8D0ECCA23258}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A76FDF52-BED8-4128-A398-8D0ECCA23258}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

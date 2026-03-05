@@ -8,5 +8,6 @@ namespace InventoryOrderingSystem.Repositories.Customers
         Task AddCustomerAsync(Customer customer);
         Task UpdateCustomerAsync(Customer customer);
         Task DeleteCustomerAsync(int id);
+        Task<Customer> GetCustomerByEmailAsync(string email);
     }
 }
