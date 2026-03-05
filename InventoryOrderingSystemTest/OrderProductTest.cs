@@ -146,5 +146,15 @@ namespace InventoryOrderingSystem.Test
             // Assert
             result.Should().BeEquivalentTo(orderProduct);
         }
+        [Fact]
+        public async Task GetAllOrderProductsAsync_ReturnsListOfOrderProducts()
+        {
+            var orderProducts = new List<OrderProduct> { GetTestOrderProduct() };
+            _repoOrderProducts.Setup(x => x.GetAllOrderProductsAsync()).ReturnsAsync(orderProducts);
+            // Act
+            var result = await _orderProductService.GetAllOrderProductsAsync();
+            // Assert
+            result.Should().BeEquivalentTo(orderProducts);
+        }
     }
 }
