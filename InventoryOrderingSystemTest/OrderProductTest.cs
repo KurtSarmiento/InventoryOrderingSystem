@@ -66,7 +66,8 @@ namespace InventoryOrderingSystem.Test
             {
                 CustomerId = 1,
                 FirstName = "Test Customer",
-                Email = "test.customer@example.com"
+                Email = "test.customer@example.com",
+                IsActive = true
             };
         }
 
@@ -102,6 +103,22 @@ namespace InventoryOrderingSystem.Test
             Func<Task> act = async () => await _orderProductService.AddOrderProductAsync(orderProduct, order.OrderId, product.ProductId);
             // Assert
             await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("Product is out of stock.");
+        }
+        [Fact]
+        public async Task AddOrderProductAsync_ReduceStock_AfterOrder()
+        {
+            var orderProduct = GetTestOrderProduct();
+            var order = GetTestOrder();
+            var product = GetTestProduct();
+            var customer = GetTestCustomer();
+            product.Stock = 10;
+            _repoOrder.Setup(x => x.GetOrderByIdAsync(orderProduct.OrderId)).ReturnsAsync(order);
+            _repoProduct.Setup(x => x.GetProductByIdAsync(orderProduct.ProductId)).ReturnsAsync(product);
+            _repoCustomer.Setup(x => x.GetCustomerByIdAsync(order.CustomerId)).ReturnsAsync(customer);
+            // Act
+            await _orderProductService.AddOrderProductAsync(orderProduct, order.OrderId, product.ProductId);
+            // Assert
+            product.Stock.Should().Be(10 - orderProduct.Quantity);
         }
     }
 }
