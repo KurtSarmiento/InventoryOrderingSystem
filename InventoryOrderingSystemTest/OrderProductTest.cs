@@ -7,6 +7,7 @@ using InventoryOrderingSystem.Services.OrderProducts;
 using InventoryOrderingSystem.Repositories.Orders;
 using Microsoft.AspNetCore.Identity;
 using Moq;
+using InventoryOrderingSystem.Repositories.Products;
 
 namespace InventoryOrderingSystem.Test
 {
@@ -15,6 +16,7 @@ namespace InventoryOrderingSystem.Test
         private readonly Mock<IOrderProductsRepository> _repoOrderProducts;
         private readonly Mock<ICustomerRepository> _repoCustomer;
         private readonly Mock<IOrderRepository> _repoOrder;
+        private readonly Mock<IProductRepository> _repoProduct;
         private readonly OrderProductService _orderProductService;
 
         public OrderProductTest()
@@ -22,7 +24,8 @@ namespace InventoryOrderingSystem.Test
             _repoOrderProducts = new Mock<IOrderProductsRepository>();
             _repoCustomer = new Mock<ICustomerRepository>();
             _repoOrder = new Mock<IOrderRepository>();
-            _orderProductService = new OrderProductService(_repoOrderProducts.Object, _repoCustomer.Object, _repoOrder.Object);
+            _repoProduct = new Mock<IProductRepository>();
+            _orderProductService = new OrderProductService(_repoOrderProducts.Object, _repoCustomer.Object, _repoOrder.Object, _repoProduct.Object);
         }
 
         private static OrderProduct GetTestOrderProduct()
@@ -37,55 +40,68 @@ namespace InventoryOrderingSystem.Test
                 DateOrdered = DateOnly.FromDateTime(DateTime.Now)
             };
         }
+        private static Order GetTestOrder()
+        {
+            return new Order
+            {
+                OrderId = 1,
+                CustomerId = 1
+            };
+        }
+
+        private static Product GetTestProduct()
+        {
+            return new Product
+            {
+                ProductId = 1,
+                Name = "Test Product",
+                Price = 10000,
+                Stock = 10
+            };
+        }
+
+        private static Customer GetTestCustomer()
+        {
+            return new Customer
+            {
+                CustomerId = 1,
+                FirstName = "Test Customer",
+                Email = "test.customer@example.com"
+            };
+        }
 
         [Fact]
-        public async Task AddOrderProductAsync_Throws_WhenCustomerIsNotActive()
+        public async Task AddOrderProductAsync_Throws_WhenUserIsNotActive()
         {
             // Arrange
             var orderProduct = GetTestOrderProduct();
-            var order = new Order
-            {
-                OrderId = 1,
-                CustomerId = 1
-            };
-            var customer = new Customer
-            {
-                CustomerId = 1,
-                FirstName = "John",
-                LastName = "Doe",
-                Email = "john.doe@example.com",
-                IsActive = false
-            };
-            _repoOrderProducts.Setup(r => r.AddOrderProductAsync(orderProduct, order.OrderId, orderProduct.ProductId)).ThrowsAsync(new NullReferenceException("Customer is not active."));
+            var order = GetTestOrder();
+            var product = GetTestProduct();
+            var customer = GetTestCustomer();
+            customer.IsActive = false;
+            _repoOrder.Setup(x => x.GetOrderByIdAsync(orderProduct.OrderId)).ReturnsAsync(order);
+            _repoProduct.Setup(x => x.GetProductByIdAsync(orderProduct.ProductId)).ReturnsAsync(product);
+            _repoCustomer.Setup(x => x.GetCustomerByIdAsync(order.CustomerId)).ReturnsAsync(customer);
             // Act
-            Func<Task> act = async () => await _orderProductService.AddOrderProductAsync(orderProduct, orderProduct.OrderId, orderProduct.ProductId);
+            Func<Task> act = async () => await _orderProductService.AddOrderProductAsync(orderProduct, order.OrderId, product.ProductId);
             // Assert
-            await act.Should().ThrowAsync<NullReferenceException>()
-                .WithMessage("Customer is not active.");
+            await act.Should().ThrowAsync<NullReferenceException>().WithMessage("Customer is not active.");
         }
         [Fact]
-        public async Task AddOrderProductAsync_SubtractsStock_WhenSuccess()
+        public async Task AddOrderProductAsync_Throws_WhenProductStockIsZero()
         {
-            // Arrange
             var orderProduct = GetTestOrderProduct();
-            var order = new Order
-            {
-                OrderId = 1,
-                CustomerId = 1
-            };
-            var customer = new Customer
-            {
-                CustomerId = 1,
-                FirstName = "John",
-                LastName = "Doe",
-                Email = "john.doe@example.com",
-                IsActive = true
-            };
-            _repoOrderProducts.Setup(r => r.AddOrderProductAsync(orderProduct, order.OrderId, orderProduct.ProductId)).Returns(Task.CompletedTask);
+            var order = GetTestOrder();
+            var product = GetTestProduct();
+            var customer = GetTestCustomer();
+            product.Stock = 0;
+            _repoOrder.Setup(x => x.GetOrderByIdAsync(orderProduct.OrderId)).ReturnsAsync(order);
+            _repoProduct.Setup(x => x.GetProductByIdAsync(orderProduct.ProductId)).ReturnsAsync(product);
+            _repoCustomer.Setup(x => x.GetCustomerByIdAsync(order.CustomerId)).ReturnsAsync(customer);
             // Act
-            await _orderProductService.AddOrderProductAsync(orderProduct, orderProduct.OrderId, orderProduct.ProductId);
+            Func<Task> act = async () => await _orderProductService.AddOrderProductAsync(orderProduct, order.OrderId, product.ProductId);
             // Assert
-            _repoOrderProducts.Verify(r => r.AddOrderProductAsync(orderProduct, order.OrderId, orderProduct.ProductId), Times.Once);
+            await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("Product is out of stock.");
         }
     }
 }
