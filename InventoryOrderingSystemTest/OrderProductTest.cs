@@ -120,5 +120,21 @@ namespace InventoryOrderingSystem.Test
             // Assert
             product.Stock.Should().Be(10 - orderProduct.Quantity);
         }
+        [Fact]
+        public async Task AddOrderProductAsync_AddsOrderProduct()
+        {
+            var orderProduct = GetTestOrderProduct();
+            var order = GetTestOrder();
+            var product = GetTestProduct();
+            var customer = GetTestCustomer();
+            _repoOrder.Setup(x => x.GetOrderByIdAsync(orderProduct.OrderId)).ReturnsAsync(order);
+            _repoProduct.Setup(x => x.GetProductByIdAsync(orderProduct.ProductId)).ReturnsAsync(product);
+            _repoCustomer.Setup(x => x.GetCustomerByIdAsync(order.CustomerId)).ReturnsAsync(customer);
+            // Act
+            await _orderProductService.AddOrderProductAsync(orderProduct, order.OrderId, product.ProductId);
+            // Assert
+            _repoOrderProducts.Verify(x => x.AddOrderProductAsync(orderProduct, order.OrderId, product.ProductId), Times.Once);
+
+        }
     }
 }
