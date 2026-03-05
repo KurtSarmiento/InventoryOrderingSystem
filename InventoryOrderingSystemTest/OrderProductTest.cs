@@ -156,5 +156,14 @@ namespace InventoryOrderingSystem.Test
             // Assert
             result.Should().BeEquivalentTo(orderProducts);
         }
+        [Fact]
+        public async Task DeleteOrderProductAsync_DeletesOrderProduct()
+        {
+            var orderProductId = 1;
+            // Act
+            await _orderProductService.DeleteOrderProductAsync(orderProductId);
+            // Assert
+            _repoOrderProducts.Verify(x => x.DeleteOrderProductAsync(orderProductId), Times.Once);
+        }
     }
 }
