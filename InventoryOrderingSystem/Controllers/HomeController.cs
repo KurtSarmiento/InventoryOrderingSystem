@@ -14,10 +14,13 @@ namespace InventoryOrderingSystem.Controllers
         private readonly ICustomerService _customerService;
         private readonly IAdminService _adminService;
 
-        public HomeController(ILogger<HomeController> logger)
-        {
-            _logger = logger;
-        }
+        public HomeController(ILogger<HomeController> logger, ICustomerService customerService, IAdminService adminService)
+            {
+                _logger = logger;
+                _customerService = customerService;
+                _adminService = adminService;
+            }
+
 
         public IActionResult Index()
         {
@@ -62,31 +65,32 @@ namespace InventoryOrderingSystem.Controllers
         [HttpPost]
         public IActionResult Login(string email, string password)
         {
+            //not working after loggin in
             var customer = _customerService.GetCustomerByEmail(email);
             var admin = _adminService.GetAdminByEmail(email);
             if (customer != null)
             {
-                bool isCorrect = SecurityHelper.VerifyPassword(password, customer.Password);
-                if (isCorrect)
+                if (admin != null)
+                {
+                    bool isAdminCorrect = SecurityHelper.VerifyPassword(password, admin.Password);
+                    if (isAdminCorrect)
+                    {
+                        return RedirectToAction("Index");
+                    }
+                }
+                bool isCustomerCorrect = SecurityHelper.VerifyPassword(password, customer.Password);
+                if (isCustomerCorrect)
                 {
                     HttpContext.Session.SetInt32("UserId", customer.CustomerId);
+                    return RedirectToAction("Index");
                 }
                 else
                 {
-                    //retry login
                     return View();
                 }
             }
-            else if (admin != null)
-            {
-                bool isCorrect = SecurityHelper.VerifyPassword(password, admin.Password);
-                if (isCorrect)
-                {
-                    HttpContext.Session.SetInt32("UserId", admin.AdminId);
-                    return RedirectToAction();
-                }
-            }
-                return View();
+            
+            return View();
         }
     }
 }
