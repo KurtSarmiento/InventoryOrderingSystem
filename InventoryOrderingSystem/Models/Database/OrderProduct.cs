@@ -11,13 +11,15 @@ public partial class OrderProduct
 
     public int ProductId { get; set; }
 
-    public int Quantity { get; set; }
-
-    public decimal Amount { get; set; }
+    public decimal? TotalAmount { get; set; }
 
     public bool IsDelivered { get; set; }
 
     public DateOnly DateOrdered { get; set; }
+
+    public int Quantity { get; set; }
+
+    public decimal UnitPrice { get; set; }
 
     public virtual Order Order { get; set; } = null!;
 

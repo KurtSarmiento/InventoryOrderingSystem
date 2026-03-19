@@ -15,6 +15,8 @@ public partial class InventoryOrderingSystemContext : DbContext
     {
     }
 
+    public virtual DbSet<Admin> Admins { get; set; }
+
     public virtual DbSet<Customer> Customers { get; set; }
 
     public virtual DbSet<Order> Orders { get; set; }
@@ -25,6 +27,18 @@ public partial class InventoryOrderingSystemContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<Admin>(entity =>
+        {
+            entity.ToTable("Admin");
+
+            entity.HasIndex(e => e.AdminId, "IX_Admin");
+
+            entity.Property(e => e.Password).IsUnicode(false);
+            entity.Property(e => e.Username)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+        });
+
         modelBuilder.Entity<Customer>(entity =>
         {
             entity.ToTable("Customer");
@@ -43,6 +57,11 @@ public partial class InventoryOrderingSystemContext : DbContext
         {
             entity.ToTable("Order");
 
+            entity.Property(e => e.DateCreated).HasDefaultValueSql("(getdate())");
+            entity.Property(e => e.Status)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+
             entity.HasOne(d => d.Customer).WithMany(p => p.Orders)
                 .HasForeignKey(d => d.CustomerId)
                 .HasConstraintName("FK_Order_Customer");
@@ -52,8 +71,9 @@ public partial class InventoryOrderingSystemContext : DbContext
         {
             entity.ToTable("OrderProduct");
 
-            entity.Property(e => e.Amount).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.DateOrdered).HasDefaultValueSql("(getdate())");
+            entity.Property(e => e.TotalAmount).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.UnitPrice).HasColumnType("decimal(10, 2)");
 
             entity.HasOne(d => d.Order).WithMany(p => p.OrderProducts)
                 .HasForeignKey(d => d.OrderId)
@@ -72,6 +92,9 @@ public partial class InventoryOrderingSystemContext : DbContext
                 .HasMaxLength(50)
                 .IsUnicode(false);
             entity.Property(e => e.Price).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.ProductCode)
+                .HasMaxLength(50)
+                .IsUnicode(false);
         });
 
         OnModelCreatingPartial(modelBuilder);

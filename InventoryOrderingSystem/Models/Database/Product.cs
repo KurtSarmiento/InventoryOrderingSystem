@@ -13,5 +13,7 @@ public partial class Product
 
     public int Stock { get; set; }
 
+    public string ProductCode { get; set; } = null!;
+
     public virtual ICollection<OrderProduct> OrderProducts { get; set; } = new List<OrderProduct>();
 }

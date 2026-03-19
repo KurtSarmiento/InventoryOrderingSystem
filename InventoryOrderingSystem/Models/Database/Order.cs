@@ -9,6 +9,10 @@ public partial class Order
 
     public int CustomerId { get; set; }
 
+    public string Status { get; set; } = null!;
+
+    public DateOnly DateCreated { get; set; }
+
     public virtual Customer Customer { get; set; } = null!;
 
     public virtual ICollection<OrderProduct> OrderProducts { get; set; } = new List<OrderProduct>();
