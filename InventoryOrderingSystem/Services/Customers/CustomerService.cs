@@ -1,4 +1,5 @@
 ﻿using InventoryOrderingSystem.Models.Database;
+using InventoryOrderingSystem.Helpers;
 using InventoryOrderingSystem.Repositories.Customers;
 
 namespace InventoryOrderingSystem.Services.Customers
@@ -13,6 +14,7 @@ namespace InventoryOrderingSystem.Services.Customers
             {
                 throw new InvalidOperationException("Email already exists.");
             }
+            customer.Password = SecurityHelper.HashPassword(customer.Password);
             await _repo.AddCustomerAsync(customer);
         }
 
