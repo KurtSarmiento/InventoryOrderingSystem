@@ -19,9 +19,9 @@ namespace InventoryOrderingSystem.Repositories.Customers
             await _context.SaveChangesAsync();
         }
 
-        public async Task<Customer> GetCustomerByEmailAsync(string email)
+        public Customer GetCustomerByEmail(string email)
         {
-            return await _context.Customers.FirstOrDefaultAsync(x => x.Email == email);
+            return _context.Customers.FirstOrDefault(x => x.Email == email);
         }
 
         public async Task<List<Customer>> GetAllCustomersAsync()

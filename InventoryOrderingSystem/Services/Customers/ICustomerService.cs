@@ -8,6 +8,6 @@ namespace InventoryOrderingSystem.Services.Customers
         Task AddCustomerAsync(Customer customer);
         Task UpdateCustomerAsync(Customer customer);
         Task DeleteCustomerAsync(int id);
-        Task<Customer> GetCustomerByEmailAsync(string email);
+        Customer GetCustomerByEmail(string email);
     }
 }

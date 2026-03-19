@@ -9,7 +9,7 @@ namespace InventoryOrderingSystem.Services.Customers
         private readonly ICustomerRepository _repo = customerRepository;
         public async Task AddCustomerAsync(Customer customer)
         {
-            var existingCustomer = await _repo.GetCustomerByEmailAsync(customer.Email);
+            var existingCustomer = _repo.GetCustomerByEmail(customer.Email);
             if (existingCustomer != null)
             {
                 throw new InvalidOperationException("Email already exists.");
@@ -28,9 +28,9 @@ namespace InventoryOrderingSystem.Services.Customers
             return await _repo.GetAllCustomersAsync();
         }
 
-        public async Task<Customer> GetCustomerByEmailAsync(string email)
+        public Customer GetCustomerByEmail(string email)
         {
-            return await _repo.GetCustomerByEmailAsync(email);
+            return _repo.GetCustomerByEmail(email);
         }
 
         public async Task<Customer> GetCustomerByIdAsync(int id)
