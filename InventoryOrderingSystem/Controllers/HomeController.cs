@@ -22,8 +22,23 @@ namespace InventoryOrderingSystem.Controllers
             }
 
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
+            try
+            {
+                // Try to get all customers from the DB
+                var customers = await _customerService.GetAllCustomersAsync();
+
+                // Pass the count to the view so we can see it
+                ViewBag.DbStatus = "Connected!";
+                ViewBag.CustomerCount = customers.Count();
+            }
+            catch (Exception ex)
+            {
+                ViewBag.DbStatus = "Error: " + ex.Message;
+                ViewBag.CustomerCount = 0;
+            }
+
             return View();
         }
 
@@ -65,31 +80,23 @@ namespace InventoryOrderingSystem.Controllers
         [HttpPost]
         public IActionResult Login(string email, string password)
         {
-            //not working after loggin in
-            var customer = _customerService.GetCustomerByEmail(email);
             var admin = _adminService.GetAdminByEmail(email);
-            if (customer != null)
+            if (admin != null && SecurityHelper.VerifyPassword(password, admin.Password))
             {
-                if (admin != null)
-                {
-                    bool isAdminCorrect = SecurityHelper.VerifyPassword(password, admin.Password);
-                    if (isAdminCorrect)
-                    {
-                        return RedirectToAction("Index");
-                    }
-                }
-                bool isCustomerCorrect = SecurityHelper.VerifyPassword(password, customer.Password);
-                if (isCustomerCorrect)
-                {
-                    HttpContext.Session.SetInt32("UserId", customer.CustomerId);
-                    return RedirectToAction("Index");
-                }
-                else
-                {
-                    return View();
-                }
+                HttpContext.Session.SetInt32("AdminId", admin.AdminId);
+                HttpContext.Session.SetString("Role", "Admin");
+                return RedirectToAction("Dashboard", "Admin"); // We will create this
             }
-            
+
+            var customer = _customerService.GetCustomerByEmail(email);
+            if (customer != null && SecurityHelper.VerifyPassword(password, customer.Password))
+            {
+                HttpContext.Session.SetInt32("UserId", customer.CustomerId);
+                HttpContext.Session.SetString("Role", "Customer");
+                return RedirectToAction("Index", "Home");
+            }
+
+            ViewBag.Error = "Invalid login attempt.";
             return View();
         }
     }

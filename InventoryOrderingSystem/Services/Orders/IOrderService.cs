@@ -5,7 +5,7 @@ namespace InventoryOrderingSystem.Services.Orders
     {
         Task<List<Order>> GetAllOrdersAsync();
         Task<Order> GetOrderByIdAsync(int id);
-        Task AddOrderAsync(Order order, int customerId);
+        Task AddOrderAsync(Order order);
         Task UpdateOrderAsync(Order order);
         Task DeleteOrderAsync(int id);
     }

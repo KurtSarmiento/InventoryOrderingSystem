@@ -6,9 +6,8 @@ namespace InventoryOrderingSystem.Repositories.Orders
     public class OrderRepository(InventoryOrderingSystemContext context) : IOrderRepository
     {
         private readonly InventoryOrderingSystemContext _context = context;
-        public async Task AddOrderAsync(Order order, int customerId)
+        public async Task AddOrderAsync(Order order)
         {
-            order.CustomerId = customerId;
             await _context.Orders.AddAsync(order);
             await _context.SaveChangesAsync();
         }

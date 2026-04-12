@@ -6,9 +6,9 @@ namespace InventoryOrderingSystem.Services.Orders
     public class OrderService(IOrderRepository orderRepository) : IOrderService
     {
         private readonly IOrderRepository _repo = orderRepository;
-        public async Task AddOrderAsync(Order order, int customerId)
+        public async Task AddOrderAsync(Order order)
         {
-            await _repo.AddOrderAsync(order, customerId);
+            await _repo.AddOrderAsync(order);
         }
 
         public async Task DeleteOrderAsync(int id)

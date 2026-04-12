@@ -1,14 +1,22 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Connection Test";
 }
 
-<html>
-    <head>
-        <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    </head>
-    <body>
-        <a class="btn btn-info" style="margin-top:10px" href="@Url.Action("Register", "Home")">Register</a>
-        <a class="btn btn-info" style="margin-top:10px" href="@Url.Action("Login", "Home")">Login</a>
-</body>
-</html>
-
+<div class="text-center">
+    <h1>Database Test</h1>
+    <hr />
+    @if (ViewBag.DbStatus == "Connected!")
+    {
+        <div class="alert alert-success">
+            <strong>Success!</strong> Your app is talking to the SQL Database.
+            <br />Total Customers in DB: @ViewBag.CustomerCount
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-danger">
+            <strong>Connection Failed!</strong>
+            <p>@ViewBag.DbStatus</p>
+        </div>
+    }
+</div>
