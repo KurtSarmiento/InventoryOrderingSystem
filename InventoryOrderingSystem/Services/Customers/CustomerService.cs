@@ -1,5 +1,4 @@
 ﻿using InventoryOrderingSystem.Models.Database;
-using InventoryOrderingSystem.Helpers;
 using InventoryOrderingSystem.Repositories.Customers;
 
 namespace InventoryOrderingSystem.Services.Customers

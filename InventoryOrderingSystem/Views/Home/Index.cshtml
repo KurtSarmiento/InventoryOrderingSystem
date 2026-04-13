@@ -3,20 +3,15 @@
 }
 
 <div class="text-center">
-    <h1>Database Test</h1>
-    <hr />
-    @if (ViewBag.DbStatus == "Connected!")
+    @if (Context.Session.GetString("Role") != null)
     {
-        <div class="alert alert-success">
-            <strong>Success!</strong> Your app is talking to the SQL Database.
-            <br />Total Customers in DB: @ViewBag.CustomerCount
-        </div>
+        <h2 class="text-success">Welcome back, @Context.Session.GetString("Role")!</h2>
+        <p>Your ID is: @Context.Session.GetInt32("AdminId")@Context.Session.GetInt32("UserId")</p>
+        <a asp-action="Logout" class="btn btn-danger">Logout</a>
     }
     else
     {
-        <div class="alert alert-danger">
-            <strong>Connection Failed!</strong>
-            <p>@ViewBag.DbStatus</p>
-        </div>
+        <h2>You are not logged in.</h2>
+        <a asp-action="Login" class="btn btn-primary">Go to Login</a>
     }
 </div>

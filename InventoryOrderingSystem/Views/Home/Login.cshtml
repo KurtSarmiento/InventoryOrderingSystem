@@ -1,25 +1,25 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
+﻿@{
+    ViewData["Title"] = "Login";
 }
 
-<html>
-    <head>
-        <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    </head>
-    <body>
-        @using (Html.BeginForm("Login", "Home", FormMethod.Post))
+<div class="row justify-content-center">
+    <div class="col-md-4">
+        <h2 class="text-center">System Login</h2>
+        <hr />
+        @if (ViewBag.Error != null)
         {
-            <div class="form-group">
-                @Html.Label("email", "Email", new { @class = "form-label" })
-                @Html.TextBox("email", null, new { @class = "form-control", type = "email", placeholder = "Enter email" })
-            </div>
-            <div class="form-group">
-                @Html.Label("password", "Password", new { @class = "form-label"})
-                @Html.Password("password", null, new { @class = "form-control", type = "password", placeholder = "Enter password"})
-            </div>
-            <button type = "submit">Submit</button>
+            <div class="alert alert-danger">@ViewBag.Error</div>
         }
-</body>
-</html>
+        <form asp-action="Login" method="post">
+            <div class="form-group mb-3">
+                <label name="email" class="control-label">Email Address</label>
+                <input name="email" class="form-control" type="email" required />
+            </div>
+            <div class="form-group mb-3">
+                <label name="password" class="control-label">Password</label>
+                <input name="password" class="form-control" type="password" required />
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Login</button>
+        </form>
+    </div>
+</div>

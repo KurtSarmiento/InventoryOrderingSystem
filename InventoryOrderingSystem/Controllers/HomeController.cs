@@ -1,8 +1,5 @@
-using System.Diagnostics;
-using InventoryOrderingSystem.Models;
 using InventoryOrderingSystem.Models.Database;
 using InventoryOrderingSystem.Services.Customers;
-using InventoryOrderingSystem.Helpers;
 using Microsoft.AspNetCore.Mvc;
 using InventoryOrderingSystem.Services.Admins;
 
@@ -20,8 +17,11 @@ namespace InventoryOrderingSystem.Controllers
                 _customerService = customerService;
                 _adminService = adminService;
             }
-
-
+        public string GetHash()
+        {
+            // This will output a valid hash for '123456' to your browser screen
+            return SecurityHelper.HashPassword("123456");
+        }
         public async Task<IActionResult> Index()
         {
             try
@@ -49,11 +49,12 @@ namespace InventoryOrderingSystem.Controllers
 
         public IActionResult Logout()
         {
-            return View();
+            HttpContext.Session.Clear(); // This wipes the UserId and Role
+            return RedirectToAction("Login");
         }
 
         [HttpPost]
-        public IActionResult Register(string firstName, string lastName, string email, string password)
+        public async Task<IActionResult> Register(string firstName, string lastName, string email, string password)
         {
             var existingCustomer = _customerService.GetCustomerByEmail(email);
             if (existingCustomer == null)
@@ -63,12 +64,17 @@ namespace InventoryOrderingSystem.Controllers
                     FirstName = firstName,
                     LastName = lastName,
                     Email = email,
-                    Password = SecurityHelper.HashPassword(password)
+                    Password = password,
+                    IsActive = true
                 };
 
-                _customerService.AddCustomerAsync(customer);
-                return View(customer);
+                // CRITICAL: You MUST await this call
+                await _customerService.AddCustomerAsync(customer);
+
+                return RedirectToAction("Login");
             }
+
+            ViewBag.Error = "Email already exists.";
             return View();
         }
 
@@ -80,23 +86,34 @@ namespace InventoryOrderingSystem.Controllers
         [HttpPost]
         public IActionResult Login(string email, string password)
         {
+            // 1. Check Admins first
             var admin = _adminService.GetAdminByEmail(email);
-            if (admin != null && SecurityHelper.VerifyPassword(password, admin.Password))
+            if (admin != null)
             {
-                HttpContext.Session.SetInt32("AdminId", admin.AdminId);
-                HttpContext.Session.SetString("Role", "Admin");
-                return RedirectToAction("Dashboard", "Admin"); // We will create this
+                // For testing, if you haven't hashed the DB password yet, 
+                // you might need: if (password == admin.Password)
+                if (SecurityHelper.VerifyPassword(password.Trim(), admin.Password))
+                {
+                    HttpContext.Session.SetInt32("AdminId", admin.AdminId);
+                    HttpContext.Session.SetString("Role", "Admin");
+                    return RedirectToAction("Index", "Home");
+                }
             }
 
+            // 2. Check Customers
             var customer = _customerService.GetCustomerByEmail(email);
-            if (customer != null && SecurityHelper.VerifyPassword(password, customer.Password))
+            if (customer != null)
             {
-                HttpContext.Session.SetInt32("UserId", customer.CustomerId);
-                HttpContext.Session.SetString("Role", "Customer");
-                return RedirectToAction("Index", "Home");
+                string cleanedStoredHash = customer.Password.Trim();
+                if (SecurityHelper.VerifyPassword(password.Trim(), cleanedStoredHash))
+                {
+                    HttpContext.Session.SetInt32("UserId", customer.CustomerId);
+                    HttpContext.Session.SetString("Role", "Customer");
+                    return RedirectToAction("Index", "Home");
+                }
             }
 
-            ViewBag.Error = "Invalid login attempt.";
+            ViewBag.Error = "Invalid email or password.";
             return View();
         }
     }
