@@ -2,44 +2,62 @@ using InventoryOrderingSystem.Models.Database;
 using InventoryOrderingSystem.Services.Customers;
 using Microsoft.AspNetCore.Mvc;
 using InventoryOrderingSystem.Services.Admins;
+using InventoryOrderingSystem.Services.OrderProducts;
+using InventoryOrderingSystem.Services.Orders;
+using InventoryOrderingSystem.Services.Products;
 
 namespace InventoryOrderingSystem.Controllers
 {
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
+        private readonly IOrderService _orderService;
+        private readonly IOrderProductService _orderProductService;
+        private readonly IProductService _productService;
         private readonly ICustomerService _customerService;
         private readonly IAdminService _adminService;
 
-        public HomeController(ILogger<HomeController> logger, ICustomerService customerService, IAdminService adminService)
-            {
-                _logger = logger;
-                _customerService = customerService;
-                _adminService = adminService;
-            }
-        public string GetHash()
+        public HomeController(
+            IOrderService orderService,
+            IOrderProductService orderProductService,
+            IProductService productService,
+            ICustomerService customerService,
+            IAdminService adminService)
         {
-            // This will output a valid hash for '123456' to your browser screen
-            return SecurityHelper.HashPassword("123456");
+            _orderService = orderService;
+            _orderProductService = orderProductService;
+            _productService = productService;
+            _customerService = customerService;
+            _adminService = adminService;
         }
+
         public async Task<IActionResult> Index()
         {
-            try
+            // Redirect if not logged in
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("Role")))
+                return RedirectToAction("Login");
+
+            if (HttpContext.Session.GetString("Role") == "Admin")
             {
-                // Try to get all customers from the DB
+                var products = await _productService.GetAllProductsAsync();
                 var customers = await _customerService.GetAllCustomersAsync();
+                var orders = await _orderService.GetAllOrdersAsync();
 
-                // Pass the count to the view so we can see it
-                ViewBag.DbStatus = "Connected!";
-                ViewBag.CustomerCount = customers.Count();
-            }
-            catch (Exception ex)
-            {
-                ViewBag.DbStatus = "Error: " + ex.Message;
-                ViewBag.CustomerCount = 0;
+                // 1. Top Level Metrics
+                ViewBag.TotalProducts = products.Count();
+                ViewBag.TotalCustomers = customers.Count(c => c.IsActive);
+                ViewBag.PendingOrders = orders.Count(o => o.Status == "Pending");
+
+                // 2. Low Stock Alert (Items with less than 10 in stock)
+                var lowStock = products.Where(p => p.Stock < 10).OrderBy(p => p.Stock).ToList();
+
+                // 3. Recent Activity (Last 5 orders)
+                var recentOrders = orders.Take(5).ToList();
+
+                return View("AdminDashboard", lowStock); // We'll name the view AdminDashboard
             }
 
-            return View();
+            return View(); // Default view for non-admins
         }
 
         public IActionResult Register()
