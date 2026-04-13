@@ -1,0 +1,78 @@
+﻿@model InventoryOrderingSystem.Models.Database.Order
+
+@{
+    ViewData["Title"] = "Order Details";
+}
+
+<div class="row justify-content-center mt-4">
+    <div class="col-md-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header text-white d-flex justify-content-between align-items-center" style="background-color: var(--forest-green);">
+                <h4 class="mb-0">ORDER #@Model.OrderId.ToString("D5")</h4>
+                <span class="badge bg-light text-dark">@Model.Status</span>
+            </div>
+            <div class="card-body p-4">
+                <div class="row mb-4">
+                    <div class="col-sm-6">
+                        <h6 class="text-muted text-uppercase">Customer</h6>
+                        <p class="fw-bold mb-0">@Model.Customer.FirstName @Model.Customer.LastName</p>
+                        <p class="text-muted">@Model.Customer.Email</p>
+                    </div>
+                    <div class="col-sm-6 text-sm-end">
+                        <h6 class="text-muted text-uppercase">Date Created</h6>
+                        <p class="fw-bold">@Model.DateCreated.ToString("MMMM dd, yyyy")</p>
+                    </div>
+                </div>
+
+                <table class="table table-bordered">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>Product</th>
+                            <th class="text-center">Price</th>
+                            <th class="text-center">Qty</th>
+                            <th class="text-end">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var op in Model.OrderProducts)
+                        {
+                            <tr>
+                                <td>@op.Product.Name</td>
+                                <td class="text-center">@op.Product.Price.ToString("C")</td>
+                                <td class="text-center">@op.Quantity</td>
+                                <td class="text-end">@((op.Quantity * op.Product.Price).ToString("C"))</td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <th colspan="3" class="text-end text-uppercase">Total Amount:</th>
+                            <th class="text-end text-success fs-5">@ViewBag.TotalAmount.ToString("C")</th>
+                        </tr>
+                    </tfoot>
+                </table>
+
+                <div class="mt-4 d-flex justify-content-between align-items-center">
+                    <a asp-action="Index" class="btn btn-outline-secondary px-4">Back to List</a>
+
+                    @if (Model.Status == "Pending")
+                    {
+                        <div class="d-flex gap-2">
+                            <form asp-action="UpdateStatus" method="post">
+                                <input type="hidden" name="id" value="@Model.OrderId" />
+                                <input type="hidden" name="status" value="Completed" />
+                                <button type="submit" class="btn btn-success">Mark as Completed</button>
+                            </form>
+
+                            <form asp-action="UpdateStatus" method="post">
+                                <input type="hidden" name="id" value="@Model.OrderId" />
+                                <input type="hidden" name="status" value="Cancelled" />
+                                <button type="submit" class="btn btn-danger" onclick="return confirm('Cancel this order?')">Cancel Order</button>
+                            </form>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

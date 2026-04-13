@@ -1,0 +1,109 @@
+﻿@model InventoryOrderingSystem.Models.OrderVM
+
+<h2 class="text-uppercase mb-4" style="color: var(--deep-brown);">New Order Form</h2>
+
+<div class="card shadow-sm border-0 p-4">
+    <form asp-action="Create" method="post">
+        <div class="mb-4">
+            <label class="form-label fw-bold">Active Customer</label>
+            <select asp-for="CustomerId" class="form-select shadow-sm" required>
+                <option value="">-- Select Customer --</option>
+                @foreach (var c in Model.AllCustomers)
+                {
+                    <option value="@c.CustomerId">@c.FirstName @c.LastName (@c.Email)</option>
+                }
+            </select>
+            <span asp-validation-for="CustomerId" class="text-danger"></span>
+        </div>
+
+        <hr />
+        
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">Order Items</h5>
+            <small class="text-muted">Ensure stock is available before ordering</small>
+        </div>
+
+        <div id="item-container">
+            <div class="row g-2 mb-2 item-row align-items-center">
+                <div class="col-md-7">
+                    <label class="small text-muted d-md-none">Product</label>
+                    <select name="Items[0].ProductId" class="form-select product-select" required onchange="checkStock(this)">
+                        <option value="">-- Select Product --</option>
+                        @foreach (var p in Model.AllProducts)
+                        {
+                            // Determine the disabled attribute string beforehand
+                            string disabledAttr = p.Stock <= 0 ? "disabled" : null;
+
+                            <option value="@p.ProductId" data-stock="@p.Stock" disabled="@disabledAttr">
+                                @p.Name — ₱@p.Price [@(p.Stock > 0 ? "Stock: " + p.Stock : "OUT OF STOCK")]
+                            </option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="small text-muted d-md-none">Quantity</label>
+                    <input name="Items[0].Quantity" type="number" class="form-control" placeholder="Qty" min="1" required />
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-outline-secondary w-100 disabled" style="opacity: 0.5;">Fixed</button>
+                </div>
+            </div>
+        </div>
+
+        <button type="button" class="btn btn-sm btn-outline-success mt-2" onclick="addItem()">
+            <i class="bi bi-plus-circle"></i> + Add Another Item
+        </button>
+
+        <div class="mt-5 d-flex justify-content-between">
+            <a asp-action="Index" class="btn btn-outline-secondary px-4">Cancel</a>
+            <button type="submit" class="btn btn-primary px-5 shadow-sm">Create Order</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        let index = 1;
+
+        function addItem() {
+            const container = document.getElementById('item-container');
+            
+            // Create a new row by cloning the first one
+            const firstRow = document.querySelector('.item-row');
+            const newRow = firstRow.cloneNode(true);
+
+            // Update the names for Model Binding (Items[1], Items[2], etc.)
+            const select = newRow.querySelector('select');
+            const input = newRow.querySelector('input');
+            const buttonCol = newRow.querySelector('.col-md-2');
+
+            select.name = `Items[${index}].ProductId`;
+            select.value = "";
+            
+            input.name = `Items[${index}].Quantity`;
+            input.value = "";
+
+            // Change the 'Fixed' button to a working 'Remove' button
+            buttonCol.innerHTML = `<button type="button" class="btn btn-outline-danger w-100" onclick="removeRow(this)">Remove</button>`;
+
+            container.appendChild(newRow);
+            index++;
+        }
+
+        function removeRow(btn) {
+            btn.closest('.item-row').remove();
+            // Optional: You could re-index here, but ASP.NET Indexers usually handle gaps if using a List
+        }
+
+        // Optional helper to alert if user tries to type more than available stock
+        function checkStock(selectElement) {
+            const selectedOption = selectElement.options[selectElement.selectedIndex];
+            const stock = parseInt(selectedOption.getAttribute('data-stock'));
+            const qtyInput = selectElement.closest('.item-row').querySelector('input[type="number"]');
+            
+            if (stock > 0) {
+                qtyInput.max = stock;
+            }
+        }
+    </script>
+}

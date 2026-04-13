@@ -21,12 +21,12 @@ namespace InventoryOrderingSystem.Repositories.Orders
 
         public async Task<List<Order>> GetAllOrdersAsync()
         {
-            return await _context.Orders.ToListAsync();
+            return await _context.Orders.Include(o => o.Customer).OrderByDescending(o => o.OrderId).ToListAsync();
         }
 
         public async Task<Order> GetOrderByIdAsync(int id)
         {
-            return await _context.Orders.FirstOrDefaultAsync(x => x.OrderId == id);
+            return await _context.Orders.Include(o => o.Customer).Include(o => o.OrderProducts).ThenInclude(op => op.Product).FirstOrDefaultAsync(o => o.OrderId == id);
         }
 
         public async Task UpdateOrderAsync(Order order)

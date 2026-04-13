@@ -1,0 +1,99 @@
+﻿@model IEnumerable<InventoryOrderingSystem.Models.Database.Order>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="text-uppercase" style="color: var(--deep-brown);">Order Management</h2>
+    <a asp-action="Create" class="btn btn-primary">Create New Order</a>
+</div>
+
+<div class="card mb-4 shadow-sm border-0">
+    <div class="card-body">
+        <form method="get" asp-action="Index" class="row g-2">
+            <div class="col-md-10">
+                <input type="text" name="searchString" value="@ViewBag.SearchString" class="form-control" placeholder="Search by Order ID or Customer Name..." />
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-success w-100">Search</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead style="background-color: var(--forest-green); color: white;">
+                <tr>
+                    <th class="ps-4">Order ID</th>
+                    <th>Date</th>
+                    <th>Customer</th>
+                    <th>Status</th>
+                    <th class="text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td class="ps-4 fw-bold">#@item.OrderId.ToString("D5")</td>
+                        <td>@item.DateCreated.ToString("MMM dd, yyyy")</td>
+                        <td>
+                            @if (item.Customer != null)
+                            {
+                                @item.Customer.FirstName @item.Customer.LastName
+                            }
+                            else
+                            {
+                                <span class="text-muted">Unknown Customer</span>
+                            }
+                        </td>
+                        <td>
+                            <span class="badge @(item.Status == "Completed" ? "bg-success" : item.Status == "Pending" ? "bg-warning text-dark" : "bg-danger")">
+                                @item.Status
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <div class="btn-group shadow-sm">
+                                <a asp-action="Details" asp-route-id="@item.OrderId" class="btn btn-sm btn-outline-secondary">View</a>
+
+                                @if (item.Status == "Pending")
+                                {
+                                    <form asp-action="UpdateStatus" method="post" class="d-inline">
+                                        <input type="hidden" name="id" value="@item.OrderId" />
+                                        <input type="hidden" name="status" value="Completed" />
+                                        <button type="submit" class="btn btn-sm btn-outline-success mx-1">Complete</button>
+                                    </form>
+
+                                    <form asp-action="UpdateStatus" method="post" class="d-inline">
+                                        <input type="hidden" name="id" value="@item.OrderId" />
+                                        <input type="hidden" name="status" value="Cancelled" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                onclick="return confirm('Are you sure you want to cancel this order?')">
+                                            Cancel
+                                        </button>
+                                    </form>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@if (ViewBag.TotalPages > 1)
+{
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            @for (int i = 1; i <= ViewBag.TotalPages; i++)
+            {
+                <li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-page="@i" asp-route-searchString="@ViewBag.SearchString"
+                       style="@(i == ViewBag.CurrentPage ? "background-color: var(--forest-green); border-color: var(--forest-green); color: white;" : "color: var(--forest-green);")">
+                        @i
+                    </a>
+                </li>
+            }
+        </ul>
+    </nav>
+}
