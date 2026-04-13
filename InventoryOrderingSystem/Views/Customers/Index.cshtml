@@ -1,0 +1,69 @@
+﻿@model IEnumerable<InventoryOrderingSystem.Models.Database.Customer>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="text-uppercase">Customer Directory</h2>
+    <a asp-action="Create" class="btn btn-primary">Add New Customer</a>
+</div>
+
+<div class="card mb-4 shadow-sm border-0">
+    <div class="card-body">
+        <form method="get" asp-action="Index" class="row g-2">
+            <div class="col-md-10">
+                <input type="text" name="searchString" value="@ViewBag.SearchString" class="form-control" placeholder="Search by name or email..." />
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-success w-100">Search</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0">
+    <table class="table align-middle mb-0">
+        <thead style="background-color: var(--forest-green); color: white;">
+            <tr>
+                <th class="ps-4">ID</th>
+                <th>Full Name</th>
+                <th>Email Address</th>
+                <th class="text-center">Status</th>
+                <th class="text-center">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td class="ps-4 text-muted">#@item.CustomerId.ToString("D3")</td>
+                    <td class="fw-bold">@item.FirstName @item.LastName</td>
+                    <td>@item.Email</td>
+                    <td class="text-center">
+                        <span class="badge @(item.IsActive ? "" : "bg-secondary")"
+                              style="@(item.IsActive ? "background-color: var(--sage-green);" : "")">
+                            @(item.IsActive ? "Active" : "Inactive")
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <a asp-action="Details" asp-route-id="@item.CustomerId" class="btn btn-sm btn-outline-secondary">View Profile</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (ViewBag.TotalPages > 1)
+{
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            @for (int i = 1; i <= ViewBag.TotalPages; i++)
+            {
+                <li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-page="@i" asp-route-searchString="@ViewBag.SearchString"
+                       style="@(i == ViewBag.CurrentPage ? "background-color: var(--forest-green); border-color: var(--forest-green); color: white;" : "color: var(--forest-green);")">
+                        @i
+                    </a>
+                </li>
+            }
+        </ul>
+    </nav>
+}

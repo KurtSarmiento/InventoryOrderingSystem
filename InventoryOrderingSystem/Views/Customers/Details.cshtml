@@ -1,0 +1,41 @@
+﻿@model InventoryOrderingSystem.Models.Database.Customer
+
+<div class="row justify-content-center mt-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm border-0">
+            <div class="card-header text-white" style="background-color: var(--forest-green);">
+                <h4 class="mb-0 text-uppercase">Customer Profile</h4>
+            </div>
+            <div class="card-body p-4">
+                <div class="text-center mb-4">
+                    <div class="display-1 text-muted"><i class="bi bi-person-circle"></i></div>
+                    <h3>@Model.FirstName @Model.LastName</h3>
+                    <span class="badge @(Model.IsActive ? "bg-success" : "bg-secondary")">
+                        @(Model.IsActive ? "Active Account" : "Inactive")
+                    </span>
+                </div>
+                <hr />
+                <p><strong>Customer ID:</strong> #@Model.CustomerId.ToString("D5")</p>
+                <p><strong>Email:</strong> @Model.Email</p>
+
+                @* Find the button section at the bottom of your Details.cshtml and replace it with this *@
+
+                <div class="mt-4 d-flex justify-content-between align-items-center">
+                    <a asp-action="Index" class="btn btn-outline-secondary">Back to List</a>
+
+                    <form asp-action="ToggleStatus" method="post">
+                        <input type="hidden" name="id" value="@Model.CustomerId" />
+                        @if (Model.IsActive)
+                        {
+                            <button type="submit" class="btn btn-danger">Deactivate Account</button>
+                        }
+                        else
+                        {
+                            <button type="submit" class="btn btn-success">Activate Account</button>
+                        }
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
