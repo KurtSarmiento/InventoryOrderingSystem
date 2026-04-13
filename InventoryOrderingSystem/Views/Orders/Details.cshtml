@@ -53,23 +53,30 @@
                 </table>
 
                 <div class="mt-4 d-flex justify-content-between align-items-center">
-                    <a asp-action="Index" class="btn btn-outline-secondary px-4">Back to List</a>
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary px-4">Back to List</a>
 
                     @if (Model.Status == "Pending")
                     {
-                        <div class="d-flex gap-2">
-                            <form asp-action="UpdateStatus" method="post">
-                                <input type="hidden" name="id" value="@Model.OrderId" />
-                                <input type="hidden" name="status" value="Completed" />
-                                <button type="submit" class="btn btn-success">Mark as Completed</button>
-                            </form>
+                        @if (Context.Session.GetString("Role") == "Admin")
+                        {
+                            <div class="d-flex gap-2">
+                                <form asp-action="UpdateStatus" method="post">
+                                    <input type="hidden" name="id" value="@Model.OrderId" />
+                                    <input type="hidden" name="status" value="Completed" />
+                                    <button type="submit" class="btn btn-success">Mark as Completed</button>
+                                </form>
 
-                            <form asp-action="UpdateStatus" method="post">
-                                <input type="hidden" name="id" value="@Model.OrderId" />
-                                <input type="hidden" name="status" value="Cancelled" />
-                                <button type="submit" class="btn btn-danger" onclick="return confirm('Cancel this order?')">Cancel Order</button>
-                            </form>
-                        </div>
+                                <form asp-action="UpdateStatus" method="post">
+                                    <input type="hidden" name="id" value="@Model.OrderId" />
+                                    <input type="hidden" name="status" value="Cancelled" />
+                                    <button type="submit" class="btn btn-danger" onclick="return confirm('Cancel this order?')">Cancel Order</button>
+                                </form>
+                            </div>
+                        }
+                        else
+                        {
+                            <span class="text-muted italic"><i class="bi bi-info-circle"></i> Your order is currently being processed by our staff.</span>
+                        }
                     }
                 </div>
             </div>

@@ -30,8 +30,10 @@ namespace InventoryOrderingSystem.Controllers
         // GET: /Orders/Index
         public async Task<IActionResult> Index(string searchString, int page = 1)
         {
-            if (HttpContext.Session.GetString("Role") != "Admin")
-                return RedirectToAction("Login", "Home");
+            var role = HttpContext.Session.GetString("Role");
+            if (string.IsNullOrEmpty(role)) return RedirectToAction("Login", "Home");
+
+            if (role == "Customer") return RedirectToAction("Index", "Home");
 
             // 1. Fetch orders AND Include the Customer data (Fixes "Unknown Customer")
             var ordersQuery = await _orderService.GetAllOrdersAsync();
@@ -67,17 +69,28 @@ namespace InventoryOrderingSystem.Controllers
         // GET: /Orders/Create
         public async Task<IActionResult> Create()
         {
-            if (HttpContext.Session.GetString("Role") != "Admin") return RedirectToAction("Login", "Home");
+            var role = HttpContext.Session.GetString("Role");
+            if (string.IsNullOrEmpty(role)) return RedirectToAction("Login", "Home");
 
-            var customers = await _customerService.GetAllCustomersAsync();
             var products = await _productService.GetAllProductsAsync();
-
             var model = new OrderVM
             {
-                AllCustomers = customers.Where(c => c.IsActive).ToList(),
-                // We show all products, but we'll label them in the View
                 AllProducts = products.ToList()
             };
+
+            if (role == "Admin")
+            {
+                var customers = await _customerService.GetAllCustomersAsync();
+                model.AllCustomers = customers.Where(c => c.IsActive).ToList();
+            }
+            else if (role == "Customer")
+            {
+                // Auto-assign the CustomerId from the session
+                model.CustomerId = HttpContext.Session.GetInt32("UserId") ?? 0;
+
+                // We don't need the list of all customers for a regular user
+                model.AllCustomers = new List<Customer>();
+            }
 
             return View(model);
         }
@@ -85,7 +98,8 @@ namespace InventoryOrderingSystem.Controllers
         [HttpPost]
         public async Task<IActionResult> Create(OrderVM model)
         {
-            if (HttpContext.Session.GetString("Role") != "Admin") return RedirectToAction("Login", "Home");
+            var role = HttpContext.Session.GetString("Role");
+            if (string.IsNullOrEmpty(role)) return RedirectToAction("Login", "Home");
 
             // If something is wrong, reload the lists so the view doesn't crash
             if (!ModelState.IsValid)
@@ -163,14 +177,21 @@ namespace InventoryOrderingSystem.Controllers
         // GET: /Orders/Details/5
         public async Task<IActionResult> Details(int id)
         {
-            if (HttpContext.Session.GetString("Role") != "Admin") return RedirectToAction("Login", "Home");
+            var role = HttpContext.Session.GetString("Role");
+            var userId = HttpContext.Session.GetInt32("UserId");
 
-            // We include Customer, OrderProducts, and the nested Products to get prices
+            if (string.IsNullOrEmpty(role)) return RedirectToAction("Login", "Home");
+
             var order = await _orderService.GetOrderByIdAsync(id);
-
             if (order == null) return NotFound();
 
-            // Calculation logic for Requirement #3 (Total Amount)
+            // SECURITY CHECK: If user is a Customer, they can ONLY see their own order
+            if (role == "Customer" && order.CustomerId != userId)
+            {
+                return Unauthorized();
+            }
+
+            // Calculation logic for Total Amount
             decimal total = 0;
             foreach (var op in order.OrderProducts)
             {

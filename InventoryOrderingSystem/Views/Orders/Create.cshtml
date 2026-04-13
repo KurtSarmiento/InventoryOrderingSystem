@@ -4,17 +4,27 @@
 
 <div class="card shadow-sm border-0 p-4">
     <form asp-action="Create" method="post">
-        <div class="mb-4">
-            <label class="form-label fw-bold">Active Customer</label>
-            <select asp-for="CustomerId" class="form-select shadow-sm" required>
-                <option value="">-- Select Customer --</option>
-                @foreach (var c in Model.AllCustomers)
-                {
-                    <option value="@c.CustomerId">@c.FirstName @c.LastName (@c.Email)</option>
-                }
-            </select>
-            <span asp-validation-for="CustomerId" class="text-danger"></span>
-        </div>
+        @if (Context.Session.GetString("Role") == "Admin")
+        {
+            <div class="mb-4">
+                <label class="form-label fw-bold">Active Customer</label>
+                <select asp-for="CustomerId" class="form-select" required>
+                    <option value="">-- Select Customer --</option>
+                    @foreach (var c in Model.AllCustomers)
+                    {
+                        <option value="@c.CustomerId">@c.FirstName @c.LastName</option>
+                    }
+                </select>
+            </div>
+        }
+        else
+        {
+            <input type="hidden" asp-for="CustomerId" />
+            <div class="mb-4">
+                <label class="form-label fw-bold">Ordering for:</label>
+                <p class="form-control-plaintext">Your Account</p>
+            </div>
+        }
 
         <hr />
         
@@ -77,10 +87,10 @@
             const input = newRow.querySelector('input');
             const buttonCol = newRow.querySelector('.col-md-2');
 
-            select.name = `Items[${index}].ProductId`;
+            select.name = `Items[₱{index}].ProductId`;
             select.value = "";
-            
-            input.name = `Items[${index}].Quantity`;
+
+            input.name = `Items[₱{index}].Quantity`;
             input.value = "";
 
             // Change the 'Fixed' button to a working 'Remove' button

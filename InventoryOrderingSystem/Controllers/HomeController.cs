@@ -37,27 +37,37 @@ namespace InventoryOrderingSystem.Controllers
             if (string.IsNullOrEmpty(HttpContext.Session.GetString("Role")))
                 return RedirectToAction("Login");
 
-            if (HttpContext.Session.GetString("Role") == "Admin")
+            var role = HttpContext.Session.GetString("Role");
+
+            if (role == "Admin")
             {
                 var products = await _productService.GetAllProductsAsync();
                 var customers = await _customerService.GetAllCustomersAsync();
                 var orders = await _orderService.GetAllOrdersAsync();
 
-                // 1. Top Level Metrics
                 ViewBag.TotalProducts = products.Count();
                 ViewBag.TotalCustomers = customers.Count(c => c.IsActive);
                 ViewBag.PendingOrders = orders.Count(o => o.Status == "Pending");
 
-                // 2. Low Stock Alert (Items with less than 10 in stock)
                 var lowStock = products.Where(p => p.Stock < 10).OrderBy(p => p.Stock).ToList();
-
-                // 3. Recent Activity (Last 5 orders)
                 var recentOrders = orders.Take(5).ToList();
 
-                return View("AdminDashboard", lowStock); // We'll name the view AdminDashboard
+                return View("AdminDashboard", lowStock);
             }
 
-            return View(); // Default view for non-admins
+            // --- ADDED FOR CUSTOMER ROLE ---
+            if (role == "Customer")
+            {
+                int? userId = HttpContext.Session.GetInt32("UserId");
+                var allOrders = await _orderService.GetAllOrdersAsync();
+
+                // Filter orders so they only see their own
+                var myOrders = allOrders.Where(o => o.CustomerId == userId).ToList();
+
+                return View("CustomerDashboard", myOrders);
+            }
+
+            return View();
         }
 
         public IActionResult Register()
