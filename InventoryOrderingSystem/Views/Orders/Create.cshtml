@@ -41,7 +41,6 @@
                         <option value="">-- Select Product --</option>
                         @foreach (var p in Model.AllProducts)
                         {
-                            // Determine the disabled attribute string beforehand
                             string disabledAttr = p.Stock <= 0 ? "disabled" : null;
 
                             <option value="@p.ProductId" data-stock="@p.Stock" disabled="@disabledAttr">
@@ -75,25 +74,22 @@
     <script>
         let index = 1;
 
-        function addItem() {
+                function addItem() {
             const container = document.getElementById('item-container');
-            
-            // Create a new row by cloning the first one
             const firstRow = document.querySelector('.item-row');
             const newRow = firstRow.cloneNode(true);
 
-            // Update the names for Model Binding (Items[1], Items[2], etc.)
             const select = newRow.querySelector('select');
             const input = newRow.querySelector('input');
             const buttonCol = newRow.querySelector('.col-md-2');
 
-            select.name = `Items[₱{index}].ProductId`;
+            // FIX: Use ${index} instead of ₱{index}
+            select.name = `Items[${index}].ProductId`;
             select.value = "";
 
-            input.name = `Items[₱{index}].Quantity`;
+            input.name = `Items[${index}].Quantity`;
             input.value = "";
 
-            // Change the 'Fixed' button to a working 'Remove' button
             buttonCol.innerHTML = `<button type="button" class="btn btn-outline-danger w-100" onclick="removeRow(this)">Remove</button>`;
 
             container.appendChild(newRow);

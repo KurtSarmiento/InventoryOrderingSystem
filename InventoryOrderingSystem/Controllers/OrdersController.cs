@@ -70,7 +70,19 @@ namespace InventoryOrderingSystem.Controllers
         public async Task<IActionResult> Create()
         {
             var role = HttpContext.Session.GetString("Role");
+            var userId = HttpContext.Session.GetInt32("UserId"); // Get UserId for status check
             if (string.IsNullOrEmpty(role)) return RedirectToAction("Login", "Home");
+
+            // --- ADDED: Block Inactive Customers from accessing the form ---
+            if (role == "Customer")
+            {
+                var customer = await _customerService.GetCustomerByIdAsync(userId ?? 0);
+                if (customer == null || !customer.IsActive)
+                {
+                    TempData["ErrorMessage"] = "Your account is currently inactive. You cannot place new orders.";
+                    return RedirectToAction("Index", "Home");
+                }
+            }
 
             var products = await _productService.GetAllProductsAsync();
             var model = new OrderVM
@@ -98,47 +110,64 @@ namespace InventoryOrderingSystem.Controllers
         [HttpPost]
         public async Task<IActionResult> Create(OrderVM model)
         {
+            // 1. Basic Security & Validation
             var role = HttpContext.Session.GetString("Role");
+            var userId = HttpContext.Session.GetInt32("UserId"); // Get UserId for server-side check
             if (string.IsNullOrEmpty(role)) return RedirectToAction("Login", "Home");
 
-            // If something is wrong, reload the lists so the view doesn't crash
+            // --- ADDED: Server-side check to prevent forced POST from inactive users ---
+            if (role == "Customer")
+            {
+                var customer = await _customerService.GetCustomerByIdAsync(userId ?? 0);
+                if (customer == null || !customer.IsActive)
+                {
+                    return Unauthorized();
+                }
+            }
+
+            ModelState.Remove("AllCustomers");
+            ModelState.Remove("AllProducts");
+
             if (!ModelState.IsValid)
             {
-                var customers = await _customerService.GetAllCustomersAsync();
-                var products = await _productService.GetAllProductsAsync();
-                model.AllCustomers = customers.Where(c => c.IsActive).ToList();
-                model.AllProducts = products.Where(p => p.Stock > 0).ToList();
+                // Reload dropdowns if validation fails
+                model.AllProducts = await _productService.GetAllProductsAsync();
+                if (role == "Admin") model.AllCustomers = await _customerService.GetAllCustomersAsync();
                 return View(model);
             }
 
-            // 1. Create the main Order
+            // 2. Create the Parent Order
             var order = new Order
             {
                 CustomerId = model.CustomerId,
                 Status = "Pending",
                 DateCreated = DateOnly.FromDateTime(DateTime.Now)
             };
-
-            // 2. Save the Order
             await _orderService.AddOrderAsync(order);
 
-            // 3. Loop through items and save to OrderProduct table
-            foreach (var item in model.Items)
+            // 3. The Critical Part: Saving each Item
+            if (model.Items != null && model.Items.Any())
             {
-                var orderProduct = new OrderProduct
+                foreach (var item in model.Items)
                 {
-                    OrderId = order.OrderId,
-                    ProductId = item.ProductId,
-                    Quantity = item.Quantity,
-                    IsDelivered = false,
-                    DateOrdered = DateOnly.FromDateTime(DateTime.Now)
-                };
-                await _orderProductService.AddOrderProductAsync(orderProduct, order.OrderId, item.ProductId);
+                    // Skip rows that were added but no product was selected
+                    if (item.ProductId == 0 || item.Quantity <= 0) continue;
 
-                // OPTIONAL: You might want to subtract the stock from the Product here!
+                    var orderProduct = new OrderProduct
+                    {
+                        OrderId = order.OrderId, // Use the ID from the order we just saved
+                        ProductId = item.ProductId,
+                        Quantity = item.Quantity,
+                        IsDelivered = false,
+                        DateOrdered = DateOnly.FromDateTime(DateTime.Now)
+                    };
+
+                    await _orderProductService.AddOrderProductAsync(orderProduct, order.OrderId, item.ProductId);
+                }
             }
 
-            return RedirectToAction(nameof(Index));
+            // Redirect based on role
+            return role == "Admin" ? RedirectToAction("Index") : RedirectToAction("Index", "Home");
         }
 
         [HttpPost]

@@ -59,6 +59,13 @@ namespace InventoryOrderingSystem.Controllers
             if (role == "Customer")
             {
                 int? userId = HttpContext.Session.GetInt32("UserId");
+
+                // Fetch the specific customer to check their IsActive status
+                var customer = await _customerService.GetCustomerByIdAsync(userId ?? 0);
+
+                // Pass the active status to the view
+                ViewBag.IsActive = customer?.IsActive ?? false;
+
                 var allOrders = await _orderService.GetAllOrdersAsync();
 
                 // Filter orders so they only see their own
