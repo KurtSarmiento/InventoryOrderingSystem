@@ -1,6 +1,6 @@
-﻿using InventoryOrderingSystem.Models.Database;
+﻿using Microsoft.AspNetCore.Mvc;
+using InventoryOrderingSystem.Models.Database;
 using InventoryOrderingSystem.Services.Products;
-using Microsoft.AspNetCore.Mvc;
 
 namespace InventoryOrderingSystem.Controllers
 {
@@ -13,29 +13,38 @@ namespace InventoryOrderingSystem.Controllers
             _productService = productService;
         }
 
-        // List all products
+        // GET: Products (Requirement #4)
         public async Task<IActionResult> Index()
         {
-            // Security check
-            if (HttpContext.Session.GetString("Role") != "Admin") return RedirectToAction("Login", "Home");
+            if (HttpContext.Session.GetString("Role") != "Admin")
+                return RedirectToAction("Login", "Home");
 
             var products = await _productService.GetAllProductsAsync();
             return View(products);
         }
 
-        // Add new product (GET)
-        public IActionResult Create() => View();
-
-        // Add new product (POST)
-        [HttpPost]
-        public async Task<IActionResult> Create(Product product)
+        // GET: Products/Create
+        public IActionResult Create()
         {
-            if (ModelState.IsValid)
+            if (HttpContext.Session.GetString("Role") != "Admin")
+                return RedirectToAction("Login", "Home");
+            return View();
+        }
+
+        // POST: Products/Create
+        [HttpPost]
+        public async Task<IActionResult> Create(string productCode, string name, decimal price, int stock)
+        {
+            var product = new Product
             {
-                await _productService.AddProductAsync(product);
-                return RedirectToAction(nameof(Index));
-            }
-            return View(product);
+                ProductCode = productCode,
+                Name = name,
+                Price = price,
+                Stock = stock
+            };
+
+            await _productService.AddProductAsync(product);
+            return RedirectToAction("Index");
         }
     }
 }

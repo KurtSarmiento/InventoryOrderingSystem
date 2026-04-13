@@ -1,0 +1,47 @@
+﻿@model IEnumerable<InventoryOrderingSystem.Models.Database.Product>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="text-uppercase" style="color: var(--deep-brown);">Inventory List</h2>
+    <a asp-action="Create" class="btn btn-primary">Add New Item</a>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead style="background-color: var(--forest-green); color: white;">
+                <tr>
+                    <th class="ps-4">Code</th>
+                    <th>Name</th>
+                    <th>Price</th>
+                    <th>Stock</th>
+                    <th class="text-center">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                        <tr>
+                            <td class="ps-4 fw-bold">@item.ProductCode</td>
+                            <td>@item.Name</td>
+                            <td>@item.Price.ToString("C")</td>
+                            <td>@item.Stock</td>
+                            <td class="text-center">
+                            @if (item.Stock <= 0)
+                            {
+                                        <span class="badge bg-danger">Out of Stock</span>
+                            }
+                            else if (item.Stock <= 10)
+                            {
+                                        <span class="badge bg-warning text-dark">Low Stock</span>
+                            }
+                            else
+                            {
+                                        <span class="badge" style="background-color: var(--sage-green);">Available</span>
+                            }
+                            </td>
+                        </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
