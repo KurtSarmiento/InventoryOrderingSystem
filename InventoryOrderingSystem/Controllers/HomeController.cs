@@ -33,7 +33,6 @@ namespace InventoryOrderingSystem.Controllers
 
         public async Task<IActionResult> Index()
         {
-            // Redirect if not logged in
             if (string.IsNullOrEmpty(HttpContext.Session.GetString("Role")))
                 return RedirectToAction("Login");
 
@@ -55,20 +54,16 @@ namespace InventoryOrderingSystem.Controllers
                 return View("AdminDashboard", lowStock);
             }
 
-            // --- ADDED FOR CUSTOMER ROLE ---
             if (role == "Customer")
             {
                 int? userId = HttpContext.Session.GetInt32("UserId");
 
-                // Fetch the specific customer to check their IsActive status
                 var customer = await _customerService.GetCustomerByIdAsync(userId ?? 0);
 
-                // Pass the active status to the view
                 ViewBag.IsActive = customer?.IsActive ?? false;
 
                 var allOrders = await _orderService.GetAllOrdersAsync();
 
-                // Filter orders so they only see their own
                 var myOrders = allOrders.Where(o => o.CustomerId == userId).ToList();
 
                 return View("CustomerDashboard", myOrders);
@@ -84,7 +79,7 @@ namespace InventoryOrderingSystem.Controllers
 
         public IActionResult Logout()
         {
-            HttpContext.Session.Clear(); // This wipes the UserId and Role
+            HttpContext.Session.Clear();
             return RedirectToAction("Login");
         }
 
@@ -103,7 +98,6 @@ namespace InventoryOrderingSystem.Controllers
                     IsActive = true
                 };
 
-                // CRITICAL: You MUST await this call
                 await _customerService.AddCustomerAsync(customer);
 
                 return RedirectToAction("Login");
@@ -121,12 +115,9 @@ namespace InventoryOrderingSystem.Controllers
         [HttpPost]
         public IActionResult Login(string email, string password)
         {
-            // 1. Check Admins first
             var admin = _adminService.GetAdminByEmail(email);
             if (admin != null)
             {
-                // For testing, if you haven't hashed the DB password yet, 
-                // you might need: if (password == admin.Password)
                 if (SecurityHelper.VerifyPassword(password.Trim(), admin.Password))
                 {
                     HttpContext.Session.SetInt32("AdminId", admin.AdminId);
@@ -135,7 +126,6 @@ namespace InventoryOrderingSystem.Controllers
                 }
             }
 
-            // 2. Check Customers
             var customer = _customerService.GetCustomerByEmail(email);
             if (customer != null)
             {

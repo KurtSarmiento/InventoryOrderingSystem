@@ -83,7 +83,6 @@
             const input = newRow.querySelector('input');
             const buttonCol = newRow.querySelector('.col-md-2');
 
-            // FIX: Use ${index} instead of ₱{index}
             select.name = `Items[${index}].ProductId`;
             select.value = "";
 
@@ -98,10 +97,8 @@
 
         function removeRow(btn) {
             btn.closest('.item-row').remove();
-            // Optional: You could re-index here, but ASP.NET Indexers usually handle gaps if using a List
         }
 
-        // Optional helper to alert if user tries to type more than available stock
         function checkStock(selectElement) {
             const selectedOption = selectElement.options[selectElement.selectedIndex];
             const stock = parseInt(selectedOption.getAttribute('data-stock'));

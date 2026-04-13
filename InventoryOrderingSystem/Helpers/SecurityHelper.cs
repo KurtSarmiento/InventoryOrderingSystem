@@ -2,7 +2,7 @@
 
 public class SecurityHelper
 {
-    private const int saltSize = 16; // Use const to prevent static interference
+    private const int saltSize = 16;
     private const int hashSize = 32;
     private const int iteration = 10000;
 
@@ -30,7 +30,6 @@ public class SecurityHelper
         {
             byte[] hashBytes = Convert.FromBase64String(storedHash);
 
-            // Safety check: if the hash is too short, it's corrupted
             if (hashBytes.Length != saltSize + hashSize) return false;
 
             byte[] salt = new byte[saltSize];
@@ -44,7 +43,6 @@ public class SecurityHelper
                 outputLength: hashSize
             );
 
-            // Compare the generated hash with the portion of hashBytes after the salt
             return CryptographicOperations.FixedTimeEquals(hash, hashBytes.AsSpan(saltSize, hashSize));
         }
         catch

@@ -46,7 +46,6 @@
                         <td>@item.Name</td>
                         <form asp-action="UpdateInventory" method="post">
                             <input type="hidden" name="productId" value="@item.ProductId" />
-                            @* Maintain search/page context if needed *@
                             <input type="hidden" name="searchString" value="@ViewBag.SearchString" />
 
                         <td>

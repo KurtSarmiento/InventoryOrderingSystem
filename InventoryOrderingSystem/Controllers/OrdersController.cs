@@ -2,8 +2,8 @@
 using InventoryOrderingSystem.Models.Database;
 using InventoryOrderingSystem.Services.Orders;
 using InventoryOrderingSystem.Services.OrderProducts;
-using InventoryOrderingSystem.Services.Products; // Add this
-using InventoryOrderingSystem.Services.Customers; // Add this
+using InventoryOrderingSystem.Services.Products;
+using InventoryOrderingSystem.Services.Customers;
 using InventoryOrderingSystem.Models;
 
 namespace InventoryOrderingSystem.Controllers
@@ -12,8 +12,8 @@ namespace InventoryOrderingSystem.Controllers
     {
         private readonly IOrderService _orderService;
         private readonly IOrderProductService _orderProductService;
-        private readonly IProductService _productService; // Add this
-        private readonly ICustomerService _customerService; // Add this
+        private readonly IProductService _productService;
+        private readonly ICustomerService _customerService;
 
         public OrdersController(
             IOrderService orderService,
@@ -27,7 +27,6 @@ namespace InventoryOrderingSystem.Controllers
             _customerService = customerService;
         }
 
-        // GET: /Orders/Index
         public async Task<IActionResult> Index(string searchString, int page = 1)
         {
             var role = HttpContext.Session.GetString("Role");
@@ -35,11 +34,9 @@ namespace InventoryOrderingSystem.Controllers
 
             if (role == "Customer") return RedirectToAction("Index", "Home");
 
-            // 1. Fetch orders AND Include the Customer data (Fixes "Unknown Customer")
             var ordersQuery = await _orderService.GetAllOrdersAsync();
             var orders = ordersQuery.AsEnumerable();
 
-            // 2. Search Logic
             if (!string.IsNullOrEmpty(searchString))
             {
                 orders = orders.Where(o =>
@@ -51,7 +48,6 @@ namespace InventoryOrderingSystem.Controllers
                 );
             }
 
-            // 3. Pagination Logic (10 per page)
             int pageSize = 10;
             int totalItems = orders.Count();
             var pagedData = orders
@@ -66,14 +62,12 @@ namespace InventoryOrderingSystem.Controllers
             return View(pagedData);
         }
 
-        // GET: /Orders/Create
         public async Task<IActionResult> Create()
         {
             var role = HttpContext.Session.GetString("Role");
-            var userId = HttpContext.Session.GetInt32("UserId"); // Get UserId for status check
+            var userId = HttpContext.Session.GetInt32("UserId");
             if (string.IsNullOrEmpty(role)) return RedirectToAction("Login", "Home");
 
-            // --- ADDED: Block Inactive Customers from accessing the form ---
             if (role == "Customer")
             {
                 var customer = await _customerService.GetCustomerByIdAsync(userId ?? 0);
@@ -97,10 +91,8 @@ namespace InventoryOrderingSystem.Controllers
             }
             else if (role == "Customer")
             {
-                // Auto-assign the CustomerId from the session
                 model.CustomerId = HttpContext.Session.GetInt32("UserId") ?? 0;
 
-                // We don't need the list of all customers for a regular user
                 model.AllCustomers = new List<Customer>();
             }
 
@@ -110,12 +102,10 @@ namespace InventoryOrderingSystem.Controllers
         [HttpPost]
         public async Task<IActionResult> Create(OrderVM model)
         {
-            // 1. Basic Security & Validation
             var role = HttpContext.Session.GetString("Role");
-            var userId = HttpContext.Session.GetInt32("UserId"); // Get UserId for server-side check
+            var userId = HttpContext.Session.GetInt32("UserId");
             if (string.IsNullOrEmpty(role)) return RedirectToAction("Login", "Home");
 
-            // --- ADDED: Server-side check to prevent forced POST from inactive users ---
             if (role == "Customer")
             {
                 var customer = await _customerService.GetCustomerByIdAsync(userId ?? 0);
@@ -130,13 +120,11 @@ namespace InventoryOrderingSystem.Controllers
 
             if (!ModelState.IsValid)
             {
-                // Reload dropdowns if validation fails
                 model.AllProducts = await _productService.GetAllProductsAsync();
                 if (role == "Admin") model.AllCustomers = await _customerService.GetAllCustomersAsync();
                 return View(model);
             }
 
-            // 2. Create the Parent Order
             var order = new Order
             {
                 CustomerId = model.CustomerId,
@@ -145,17 +133,15 @@ namespace InventoryOrderingSystem.Controllers
             };
             await _orderService.AddOrderAsync(order);
 
-            // 3. The Critical Part: Saving each Item
             if (model.Items != null && model.Items.Any())
             {
                 foreach (var item in model.Items)
                 {
-                    // Skip rows that were added but no product was selected
                     if (item.ProductId == 0 || item.Quantity <= 0) continue;
 
                     var orderProduct = new OrderProduct
                     {
-                        OrderId = order.OrderId, // Use the ID from the order we just saved
+                        OrderId = order.OrderId,
                         ProductId = item.ProductId,
                         Quantity = item.Quantity,
                         IsDelivered = false,
@@ -166,7 +152,6 @@ namespace InventoryOrderingSystem.Controllers
                 }
             }
 
-            // Redirect based on role
             return role == "Admin" ? RedirectToAction("Index") : RedirectToAction("Index", "Home");
         }
 
@@ -175,12 +160,10 @@ namespace InventoryOrderingSystem.Controllers
         {
             if (HttpContext.Session.GetString("Role") != "Admin") return RedirectToAction("Login", "Home");
 
-            // 1. Get the order including the items so we know what to put back
             var order = await _orderService.GetOrderByIdAsync(id);
 
             if (order != null && order.Status == "Pending")
             {
-                // 2. If we are cancelling, replenish the stock
                 if (status == "Cancelled")
                 {
                     foreach (var item in order.OrderProducts)
@@ -188,14 +171,12 @@ namespace InventoryOrderingSystem.Controllers
                         var product = await _productService.GetProductByIdAsync(item.ProductId);
                         if (product != null)
                         {
-                            // Add the ordered quantity back to the current stock
                             product.Stock += item.Quantity;
                             await _productService.UpdateProductAsync(product);
                         }
                     }
                 }
 
-                // 3. Update the order status itself
                 order.Status = status;
                 await _orderService.UpdateOrderAsync(order);
             }
@@ -203,7 +184,6 @@ namespace InventoryOrderingSystem.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: /Orders/Details/5
         public async Task<IActionResult> Details(int id)
         {
             var role = HttpContext.Session.GetString("Role");
@@ -214,13 +194,11 @@ namespace InventoryOrderingSystem.Controllers
             var order = await _orderService.GetOrderByIdAsync(id);
             if (order == null) return NotFound();
 
-            // SECURITY CHECK: If user is a Customer, they can ONLY see their own order
             if (role == "Customer" && order.CustomerId != userId)
             {
                 return Unauthorized();
             }
 
-            // Calculation logic for Total Amount
             decimal total = 0;
             foreach (var op in order.OrderProducts)
             {

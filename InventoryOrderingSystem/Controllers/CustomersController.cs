@@ -13,7 +13,6 @@ namespace InventoryOrderingSystem.Controllers
             _customerService = customerService;
         }
 
-        // GET: Customers (Requirement #5)
         public async Task<IActionResult> Index(string searchString, int page = 1)
         {
             if (HttpContext.Session.GetString("Role") != "Admin")
@@ -21,7 +20,6 @@ namespace InventoryOrderingSystem.Controllers
 
             var customers = await _customerService.GetAllCustomersAsync();
 
-            // 1. Search Logic (Search by Name or Email)
             if (!string.IsNullOrEmpty(searchString))
             {
                 customers = customers.Where(c =>
@@ -30,7 +28,6 @@ namespace InventoryOrderingSystem.Controllers
                     c.Email.Contains(searchString, StringComparison.OrdinalIgnoreCase)).ToList();
             }
 
-            // 2. Pagination Logic (10 per page)
             int pageSize = 10;
             int totalItems = customers.Count();
             var pagedData = customers.Skip((page - 1) * pageSize).Take(pageSize).ToList();
@@ -42,7 +39,6 @@ namespace InventoryOrderingSystem.Controllers
             return View(pagedData);
         }
 
-        // Action for the Details button
         public async Task<IActionResult> Details(int id)
         {
             if (HttpContext.Session.GetString("Role") != "Admin") return RedirectToAction("Login", "Home");
@@ -53,7 +49,6 @@ namespace InventoryOrderingSystem.Controllers
             return View(customer);
         }
 
-        // GET: Customers/Create
         public IActionResult Create()
         {
             if (HttpContext.Session.GetString("Role") != "Admin")
@@ -61,7 +56,6 @@ namespace InventoryOrderingSystem.Controllers
             return View();
         }
 
-        // POST: Customers/Create
         [HttpPost]
         public async Task<IActionResult> Create(string firstName, string lastName, string email, string password)
         {
@@ -70,7 +64,7 @@ namespace InventoryOrderingSystem.Controllers
                 FirstName = firstName,
                 LastName = lastName,
                 Email = email,
-                Password = password, // Remember: Your Service handles the hashing!
+                Password = password,
                 IsActive = true
             };
 
